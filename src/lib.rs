@@ -1,6 +1,26 @@
+pub mod either;
+
+use std::io::BufRead;
+
 pub fn get_input_file() -> std::fs::File {
     let file = std::env::args().nth(1).expect("expected one argument");
     std::fs::File::open(file).expect("Cannot open file with aoc input")
+}
+
+pub fn parse_line_by_line<T, F: for<'a> FnMut(&'a str) -> T>(
+    file: std::fs::File,
+    mut parse_line: F,
+) -> impl Iterator<Item = T> {
+    let mut reader = std::io::BufReader::new(file);
+    let mut buffer = String::new();
+    std::iter::from_fn(move || {
+        buffer.clear();
+        let ok = reader
+            .read_line(&mut buffer)
+            .ok()
+            .filter(|&rbytes| rbytes > 0);
+        ok.map(|_| (parse_line)(buffer.trim()))
+    })
 }
 
 #[derive(Debug, Clone)]
@@ -34,6 +54,17 @@ impl<T> Array2D<T> {
         }
     }
 
+    pub fn from_shape_and_val((rows, cols): (usize, usize), val: T) -> Self
+    where
+        T: Clone,
+    {
+        Self {
+            data: vec![val; rows * cols],
+            rows,
+            cols,
+        }
+    }
+
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
@@ -61,6 +92,13 @@ impl<T> Array2D<T> {
 
     pub fn rows(&self) -> impl DoubleEndedIterator<Item = &[T]> + '_ {
         self.data.chunks(self.cols)
+    }
+
+    pub fn iter_indexed(&self) -> impl DoubleEndedIterator<Item = ((usize, usize), &T)> + '_ {
+        self.data
+            .iter()
+            .enumerate()
+            .map(move |(idx, val)| ((idx / self.cols, idx % self.cols), val))
     }
 }
 
