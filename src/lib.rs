@@ -1,4 +1,5 @@
 pub mod either;
+pub mod iter_ext;
 
 use std::io::BufRead;
 
@@ -92,6 +93,10 @@ impl<T> Array2D<T> {
 
     pub fn rows(&self) -> impl DoubleEndedIterator<Item = &[T]> + '_ {
         self.data.chunks(self.cols)
+    }
+
+    pub fn rows_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut [T]> + '_ {
+        self.data.chunks_mut(self.cols)
     }
 
     pub fn iter_indexed(&self) -> impl DoubleEndedIterator<Item = ((usize, usize), &T)> + '_ {
